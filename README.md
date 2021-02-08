@@ -9,7 +9,7 @@ This program is a bot that finds the most talked about stocks on various popular
 
 subreddits = ["investing", "wallstreetbets", "Stocks", "StockMarket"]
 AnalyzeRedditData(tickers, subreddits, "hot") # Returns a table of the most talked about in the top 1000 posts on the hot pages of r/Stocks, r/StockMarket, 
-                                                r/WallStreetBets, and r/Investing
+                                              # r/WallStreetBets, and r/Investing
 ```
 
 ## Contributing
