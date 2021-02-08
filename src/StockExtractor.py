@@ -3,7 +3,8 @@ Justin Brunings and Luke Argosino
 Reddit Trending Stock Extraction Bot
 """
 
-import praw, pandas
+import pandas
+import praw
 from praw.models import MoreComments
 
 
