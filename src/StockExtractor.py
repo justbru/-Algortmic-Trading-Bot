@@ -51,24 +51,15 @@ def AnalyzeRedditData(tickers, subreddits, condition):
                 if not post.stickied:
                     myData = scrapePost(post, myData, tickers)
 
-    print("Stock\t\t   Count\t\tPositive   \t\tNegative")
+    print("Stock, Count, Positive, Negative, Buy Score")
     for key in myData:
         tempwordGood = key + "Good"
         tempwordBad = key + "Bad"
         if key[-3:] != "Bad" and key[-4:] != "Good":
-            if myData[key] > 6 and myData[key+"Good"] > myData[key+"Bad"]:
-                if len(key) == 1:
-                    print(key, "       \t\t", myData[key], "\t\t\t\t", myData[tempwordGood], "\t\t\t\t",
-                          myData[tempwordBad])
-                if len(key) == 2:
-                    print(key, "      \t\t", myData[key], "\t\t\t\t", myData[tempwordGood], "\t\t\t\t",
-                          myData[tempwordBad])
-                if len(key) == 3:
-                    print(key, "     \t\t", myData[key], "\t\t\t\t", myData[tempwordGood], "\t\t\t\t",
-                          myData[tempwordBad])
-                if len(key) == 4:
-                    print(key, "   \t\t", myData[key], "\t\t\t\t", myData[tempwordGood], "\t\t\t\t",
-                          myData[tempwordBad])
+            score = buyScore(myData, key)
+            if (myData[key] > 6 or (condition == "rising" and myData[key] > 4)) and myData[key + "Good"] > myData[key + "Bad"]:
+                print(key, ": ", myData[key], "| ", myData[tempwordGood], "| ",
+                      myData[tempwordBad], "| ", round(score, 2), " ")
 
 
 def scrapePost(post, myData, tickers):
@@ -87,6 +78,8 @@ def scrapePost(post, myData, tickers):
 
     max = 0
     referenceTicker = ""
+
+    # Creates a new entry in myData that contains a good and bad for each ticker that has the value of each
     for ticker in postTickers:
         badWord = ticker + "Bad"
         goodWord = ticker + "Good"
@@ -98,6 +91,7 @@ def scrapePost(post, myData, tickers):
             referenceTicker = ticker
             max = myData[ticker]
 
+    # If the post contains a ticker, this portion looks through the data again adding to the tickers good and bad entry
     if containsTicker:
         myData = scrapeDataHelper(myData, postData, referenceTicker)
         for top_level_comment in post.comments:
@@ -118,13 +112,22 @@ def scrapeDataHelper(myData, postData, referenceTicker):
     return myData
 
 
+def buyScore(myData, key):
+    if myData[key+"Bad"] == 0:
+        myData[key+"Bad"] = 1
+    return (pow(myData[key], 2) * (myData[key+"Good"] / myData[key+"Bad"])) / 10
+
+
 if __name__ == '__main__':
     positiveWords = loadPositiveWords()
     negativeWords = loadNegativeWords()
     tickers = loadTickers()
-    print("Most talked about stocks on r/wsb and r/investing:\n")
+    print("\nMost talked about stocks on r/WallStreetBets, r/Investing, r/Stocks, and r/StockMarket:\n")
     subreddits = ["investing", "wallstreetbets", "Stocks", "StockMarket"]
     AnalyzeRedditData(tickers, subreddits, "hot")
+    print("\nMost talked about rising stocks on r/WallStreetBets, r/Investing, r/Stocks, and r/StockMarket:\n")
+    AnalyzeRedditData(tickers, subreddits, "rising")
+    subreddits = ["investing", "wallstreetbets", "Stocks", "StockMarket"]
     print("\nMost talked about stocks on r/pennystocks and r/RobinHoodPennyStocks:\n")
     subreddits = ["pennystocks", "RobinHoodPennyStocks"]
     AnalyzeRedditData(tickers, subreddits, "new")
