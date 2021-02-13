@@ -15,13 +15,6 @@ def loadTickers():
     return tickers
 
 
-def loadNames():
-    colnames = ['Symbol', 'CompanyName']
-    data = pandas.read_csv('Tickers.csv', names=colnames)
-    names = data.CompanyName.tolist()
-    return names
-
-
 def loadPositiveWords():
     colnames = ['Word', '']
     data = pandas.read_csv('PositiveWords.csv', names=colnames)
@@ -36,42 +29,48 @@ def loadNegativeWords():
     return posNames
 
 
-def AnalyzeRedditData(tickers, names, subreddits, condition):
+def AnalyzeRedditData(tickers, subreddits, condition):
     reddit = praw.Reddit(client_id="bgzEHVmGS23rZw",
                          client_secret="jaFzjBfQM2VCBfEISB2qnO3YY1lrUA",
                          user_agent="trending stock extractor v1.0 by /u/justbru")
     myData = {}
+    if condition == "hot and new":
+        for subreddit in subreddits:
+            for post in reddit.subreddit(subreddit).hot(limit=1000):
+                if not post.stickied:
+                    myData = scrapePost(post, myData, tickers)
+            for post in reddit.subreddit(subreddit).new(limit=1000):
+                if not post.stickied:
+                    myData = scrapePost(post, myData, tickers)
     if condition == "hot":
         for subreddit in subreddits:
             for post in reddit.subreddit(subreddit).hot(limit=1000):
                 if not post.stickied:
-                    myData = scrapePost(post, myData, tickers, names)
+                    myData = scrapePost(post, myData, tickers)
     elif condition == "new":
         for subreddit in subreddits:
             for post in reddit.subreddit(subreddit).new(limit=1000):
                 if not post.stickied:
-                    myData = scrapePost(post, myData, tickers, names)
+                    myData = scrapePost(post, myData, tickers)
     else:
         for subreddit in subreddits:
             for post in reddit.subreddit(subreddit).rising(limit=1000):
                 if not post.stickied:
-                    myData = scrapePost(post, myData, tickers, names)
+                    myData = scrapePost(post, myData, tickers)
 
     print("Stock, Count, Positive, Negative")
     for key in myData:
         tempwordGood = key + "Good"
         tempwordBad = key + "Bad"
         if key[-3:] != "Bad" and key[-4:] != "Good":
-            if ((condition == "hot" and myData[key] > 4) or (condition == "rising" and myData[key] > 3)
+            if ((condition == "hot and new" and myData[key] > 10) or (condition == "rising" and myData[key] > 3)
                 or (condition == "new" and myData[key] > 8)) and myData[key + "Good"] > myData[key + "Bad"]:
                 print(key, ": ", myData[key], "| ", myData[tempwordGood], "| ",
                       myData[tempwordBad])
 
 
-def scrapePost(post, myData, tickers, names):
+def scrapePost(post, myData, tickers):
     containsTicker = False
-    title = post.title;
-    postDataNonSplit = post.selftext
     postData = post.selftext.split()
     postTickers = []
     for word in postData:
@@ -124,15 +123,11 @@ if __name__ == '__main__':
     positiveWords = loadPositiveWords()
     negativeWords = loadNegativeWords()
     tickers = loadTickers()
-    names = loadNames()
     print("\nMost talked about stocks on r/WallStreetBets, r/Investing, r/Stocks, and r/StockMarket:\n")
     subreddits = ["investing", "wallstreetbets", "Stocks", "StockMarket"]
-    AnalyzeRedditData(tickers, names, subreddits, "hot")
+    AnalyzeRedditData(tickers, subreddits, "hot and new")
     print("\nMost talked about rising stocks on r/WallStreetBets, r/Investing, r/Stocks, and r/StockMarket:\n")
-    AnalyzeRedditData(tickers, names, subreddits, "rising")
-    print("\nMost talked about new stocks on r/WallStreetBets, r/Investing, r/Stocks, and r/StockMarket:\n")
-    AnalyzeRedditData(tickers, names, subreddits, "new")
-    subreddits = ["investing", "wallstreetbets", "Stocks", "StockMarket"]
+    AnalyzeRedditData(tickers, subreddits, "rising")
     print("\nMost talked about stocks on r/pennystocks and r/RobinHoodPennyStocks:\n")
     subreddits = ["pennystocks", "RobinHoodPennyStocks"]
-    AnalyzeRedditData(tickers, names, subreddits, "new")
+    AnalyzeRedditData(tickers, subreddits, "new")
