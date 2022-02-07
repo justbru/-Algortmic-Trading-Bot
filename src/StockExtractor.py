@@ -1,5 +1,5 @@
 """
-Justin Brunings and Luke Argosino
+Justin Brunings
 Reddit Trending Stock Extraction Bot
 """
 
